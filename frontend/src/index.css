@@ -1,12 +1,67 @@
-﻿@tailwind base;
-@tailwind components;
-@tailwind utilities;
+﻿@import "tailwindcss";
 
+/* Fuentes de Google */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
+
+/* Definir variables CSS personalizadas */
+:root {
+  --color-turrs-blue: #5DADE2;
+  --color-turrs-red: #C0392B;
+  --color-turrs-brown: #8B4513;
+  --color-turrs-skin: #F5DEB3;
+  --color-turrs-black: #000000;
+  --color-turrs-white: #FFFFFF;
+  
+  --font-turrs-title: '"Urban Jungle"', sans-serif;
+  --font-turrs-text: 'Montserrat', sans-serif;
+}
+
+/* Estilos base personalizados */
 body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  font-family: 'Montserrat', sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700;
+}
+
+/* Componentes personalizados */
+.btn-turrs {
+  background-color: var(--color-turrs-blue);
+  color: white;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+}
+
+.btn-turrs:hover {
+  background-color: #2563eb; /* blue-600 */
+  transition: all 300ms;
+}
+
+.btn-turrs-red {
+  background-color: var(--color-turrs-red);
+  color: white;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+}
+
+.btn-turrs-red:hover {
+  background-color: #b91c1c; /* red-700 */
+  transition: all 300ms;
+}
+
+.card-turrs {
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  border: 1px solid #e5e7eb; /* gray-200 */
 }
