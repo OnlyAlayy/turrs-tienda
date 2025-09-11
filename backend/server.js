@@ -1,10 +1,12 @@
-﻿const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
-require('dotenv').config();
+﻿import express from 'express';
+import mongoose from 'mongoose';
+import cors from 'cors';
+import dotenv from 'dotenv';
 
 // Importar rutas
-const testRoutes = require('./routes/test');
+import authRoutes from './routes/auth.js';
+import productRoutes from './routes/products.js';
+import reviewRoutes from './routes/reviews.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -19,19 +21,21 @@ mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('✅ Conectado a MongoDB'))
   .catch(err => console.log('❌ Error conectando a MongoDB:', err));
 
-// Usar rutas
-app.use('/api/test', testRoutes);
+// Rutas
+app.use('/api/auth', authRoutes);
+app.use('/api/products', productRoutes);
+app.use('/api/reviews', reviewRoutes);
 
 // Ruta básica de prueba
 app.get('/api', (req, res) => {
   res.json({ message: 'Bienvenido a la API de TURRS Tienda' });
 });
 
-// Ruta por defecto para manejar 404 - CORREGIDO
+// Ruta por defecto para manejar 404
 app.use((req, res) => {
   res.status(404).json({ error: 'Ruta no encontrada' });
 });
 
 app.listen(PORT, () => {
-  console.log('🚀 Servidor corriendo en http://localhost:' + PORT);
+  console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
 });

@@ -7,7 +7,6 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Colores de TURRS basados en el logo
         'turrs-blue': '#5DADE2',
         'turrs-red': '#C0392B',
         'turrs-brown': '#8B4513',
@@ -16,7 +15,6 @@ export default {
         'turrs-white': '#FFFFFF',
       },
       fontFamily: {
-        // Fuentes para TURRS (puedes cambiar luego por una fuente graffiti)
         'turrs-title': ['"Urban Jungle"', 'sans-serif'],
         'turrs-text': ['Montserrat', 'sans-serif'],
       },

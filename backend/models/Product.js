@@ -1,4 +1,4 @@
-﻿const mongoose = require('mongoose');
+﻿import mongoose from 'mongoose';
 
 const productSchema = new mongoose.Schema({
   name: {
@@ -34,10 +34,21 @@ const productSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  tags: [String],
   createdAt: {
+    type: Date,
+    default: Date.now
+  },
+  updatedAt: {
     type: Date,
     default: Date.now
   }
 });
 
-module.exports = mongoose.model('Product', productSchema);
+// Actualizar updatedAt antes de guardar
+productSchema.pre('save', function(next) {
+  this.updatedAt = Date.now();
+  next();
+});
+
+export default mongoose.model('Product', productSchema);
