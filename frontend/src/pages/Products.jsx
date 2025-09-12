@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Swal from 'sweetalert2';
+import { useCart } from '../contexts/CartContext';
+import { Link } from 'react-router-dom';
 
 const Products = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
+  const { addToCart } = useCart();
 
   useEffect(() => {
     fetchProducts();
@@ -36,6 +39,17 @@ const Products = () => {
     fetchProducts();
   };
 
+  const handleAddToCart = (product) => {
+    addToCart(product);
+    Swal.fire({
+      icon: 'success',
+      title: '¡Producto agregado!',
+      text: `${product.name} se agregó al carrito`,
+      timer: 1500,
+      showConfirmButton: false
+    });
+  };
+
   const categories = [...new Set(products.map(p => p.category))];
 
   if (loading) {
@@ -53,7 +67,7 @@ const Products = () => {
         <h1 className="font-turrs-title text-3xl text-turrs-blue mb-4 text-center">
           Nuestros Productos
         </h1>
-        
+
         {/* Search and Filter */}
         <div className="flex flex-col md:flex-row gap-4 mb-6">
           <form onSubmit={handleSearch} className="flex-1">
@@ -93,27 +107,37 @@ const Products = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {products.map((product) => (
           <div key={product._id} className="card-turrs hover:shadow-xl transition-shadow">
-            {product.images && product.images[0] && (
-              <img
-                src={product.images[0]}
-                alt={product.name}
-                className="w-full h-48 object-cover rounded-t-lg mb-4"
-              />
-            )}
-            <div className="p-4">
-              <h3 className="font-turrs-text font-semibold text-lg mb-2">{product.name}</h3>
-              <p className="font-turrs-text text-gray-600 text-sm mb-4 line-clamp-2">
-                {product.description}
-              </p>
-              <div className="flex justify-between items-center">
-                <span className="font-turrs-text font-bold text-turrs-blue text-xl">
-                  ${product.price}
-                </span>
-                <button className="btn-turrs-red text-sm px-4 py-2">
-                  Agregar al carrito
-                </button>
+            <Link to={`/product/${product._id}`}>
+              {product.images && product.images[0] && (
+                <img
+                  src={product.images[0]}
+                  alt={product.name}
+                  className="w-full h-48 object-cover rounded-t-lg mb-4"
+                />
+              )}
+              <div className="p-4">
+                <h3 className="font-turrs-text font-semibold text-lg mb-2 hover:text-turrs-blue">
+                  {product.name}
+                </h3>
+                <p className="font-turrs-text text-gray-600 text-sm mb-4 line-clamp-2">
+                  {product.description}
+                </p>
+                <div className="flex justify-between items-center">
+                  <span className="font-turrs-text font-bold text-turrs-blue text-xl">
+                    ${product.price}
+                  </span>
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault(); // evita que el Link redirija
+                      handleAddToCart(product);
+                    }}
+                    className="btn-turrs-red text-sm px-4 py-2"
+                  >
+                    Agregar al carrito
+                  </button>
+                </div>
               </div>
-            </div>
+            </Link>
           </div>
         ))}
       </div>
