@@ -4,6 +4,8 @@ import { AuthProvider } from './contexts/AuthContext';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import Home from './pages/Home';
+import Products from './pages/Products';
+import AdminDashboard from './pages/admin/AdminDashboard';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -14,16 +16,18 @@ function App() {
           <Header />
           <main className="flex-grow">
             <Routes>
+              {/* Página principal */}
               <Route path="/" element={<Home />} />
-              {/* Agregar más rutas aquí */}
+
+              {/* Página de productos */}
+              <Route path="/products" element={<Products />} />
+
+              {/* Panel de administración protegido */}
               <Route 
                 path="/admin" 
                 element={
                   <ProtectedRoute requiredRole="admin">
-                    <div className="container mx-auto p-4">
-                      <h2>Panel de Administración</h2>
-                      {/* Aquí irá el admin dashboard */}
-                    </div>
+                    <AdminDashboard />
                   </ProtectedRoute>
                 } 
               />
