@@ -4,15 +4,15 @@ import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useOrder } from '../contexts/OrderContext';
 import Swal from 'sweetalert2';
+import axios from 'axios';
 
 const Checkout = () => {
   const navigate = useNavigate();
   const { cartItems, getCartTotal, clearCart } = useCart();
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated } = useAuth();
   const { createOrder, loading } = useOrder();
 
   const [formData, setFormData] = useState({
-    // Datos de envío
     shippingAddress: {
       street: '',
       city: '',
@@ -20,7 +20,6 @@ const Checkout = () => {
       zipCode: '',
       country: 'Argentina'
     },
-    // Datos de pago
     paymentMethod: 'mercadopago',
     cardNumber: '',
     cardExpiry: '',
@@ -30,6 +29,7 @@ const Checkout = () => {
 
   const [errors, setErrors] = useState({});
 
+  // Si no está logueado, avisar y redirigir
   if (!isAuthenticated) {
     Swal.fire({
       icon: 'warning',
@@ -40,7 +40,8 @@ const Checkout = () => {
     return null;
   }
 
-  if (cartItems.length === 0) {
+  // Si carrito vacío, redirigir al carrito
+  if (!cartItems || cartItems.length === 0) {
     navigate('/cart');
     return null;
   }
@@ -49,12 +50,12 @@ const Checkout = () => {
     const newErrors = {};
 
     // Validar dirección de envío
-    if (!formData.shippingAddress.street) newErrors.street = 'La calle es requerida';
-    if (!formData.shippingAddress.city) newErrors.city = 'La ciudad es requerida';
-    if (!formData.shippingAddress.state) newErrors.state = 'La provincia es requerida';
-    if (!formData.shippingAddress.zipCode) newErrors.zipCode = 'El código postal es requerido';
+    if (!formData.shippingAddress.street || !formData.shippingAddress.street.trim()) newErrors.street = 'La calle es requerida';
+    if (!formData.shippingAddress.city || !formData.shippingAddress.city.trim()) newErrors.city = 'La ciudad es requerida';
+    if (!formData.shippingAddress.state || !formData.shippingAddress.state.trim()) newErrors.state = 'La provincia es requerida';
+    if (!formData.shippingAddress.zipCode || !formData.shippingAddress.zipCode.trim()) newErrors.zipCode = 'El código postal es requerido';
 
-    // Validar datos de tarjeta si no es MercadoPago
+    // Validar datos de tarjeta si se selecciona Stripe (tarjeta directa)
     if (formData.paymentMethod === 'stripe') {
       if (!formData.cardNumber) newErrors.cardNumber = 'El número de tarjeta es requerido';
       if (!formData.cardExpiry) newErrors.cardExpiry = 'La fecha de vencimiento es requerida';
@@ -65,6 +66,8 @@ const Checkout = () => {
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
+
+  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -85,31 +88,82 @@ const Checkout = () => {
 
       const result = await createOrder(orderData);
 
-      if (result.success) {
-        // Limpiar carrito
-        clearCart();
-        
-        // Redirigir a confirmación
-        navigate(`/order-confirmation/${result.order._id}`);
-      } else {
+      if (!result || !result.success) {
         Swal.fire({
           icon: 'error',
           title: 'Error',
-          text: result.message
+          text: result?.message || 'No se pudo crear la orden'
         });
+        return;
       }
+
+      // Si es MercadoPago: crear preferencia en el backend y redirigir al checkout
+      if (formData.paymentMethod === 'mercadopago') {
+        const token = localStorage.getItem('token') || '';
+        const preferenceResponse = await axios.post(
+          `${API_URL}/api/payments/create-preference`,
+          {
+            items: cartItems,
+            orderId: result.order._id
+          },
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          }
+        );
+
+        // Buscar init_point en distintos posibles lugares (backend puede devolver init_point o sandbox_init_point)
+        const data = preferenceResponse.data || {};
+        const initPoint =
+          data.sandbox_init_point ||
+          data.init_point ||
+          data.body?.sandbox_init_point ||
+          data.body?.init_point ||
+          data.checkout?.init_point;
+
+        if (!initPoint) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'No se pudo obtener la URL de redirección de Mercado Pago'
+          });
+          return;
+        }
+
+        // Redirigir al checkout de MercadoPago
+        window.location.href = initPoint;
+        return;
+      }
+
+      // Si es PayPal (placeholder, puedes implementar llamada a backend para generar checkout)
+      if (formData.paymentMethod === 'paypal') {
+        Swal.fire({
+          icon: 'info',
+          title: 'Redirección a PayPal',
+          text: 'Implementación de PayPal pendiente.'
+        });
+        return;
+      }
+
+      // Si es Stripe (o cualquier otro método que procese en tu sitio):
+      // Limpiamos carrito y mostramos confirmación local
+      clearCart();
+      navigate(`/order-confirmation/${result.order._id}`);
     } catch (error) {
+      console.error('Checkout error:', error);
       Swal.fire({
         icon: 'error',
         title: 'Error',
-        text: 'Ocurrió un error al procesar tu orden'
+        text: error.response?.data?.message || 'Ocurrió un error al procesar tu orden'
       });
     }
   };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    
+
+    // Soporta nombres con punto para campos anidados ("shippingAddress.street")
     if (name.includes('.')) {
       const [parent, child] = name.split('.');
       setFormData(prev => ({
@@ -119,16 +173,21 @@ const Checkout = () => {
           [child]: value
         }
       }));
+
+      // Limpiar error específico del campo anidado (ej: 'street', 'city', etc.)
+      if (errors[child]) {
+        setErrors(prev => ({ ...prev, [child]: '' }));
+      }
     } else {
       setFormData(prev => ({
         ...prev,
         [name]: value
       }));
-    }
 
-    // Limpiar error del campo
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }));
+      // Limpiar error si existe
+      if (errors[name]) {
+        setErrors(prev => ({ ...prev, [name]: '' }));
+      }
     }
   };
 
@@ -238,11 +297,13 @@ const Checkout = () => {
                   Selecciona método de pago *
                 </label>
                 <div className="grid grid-cols-3 gap-4">
-                  <label className={`border-2 rounded-lg p-4 cursor-pointer text-center ${
-                    formData.paymentMethod === 'mercadopago' 
-                      ? 'border-turrs-blue bg-blue-50' 
-                      : 'border-gray-300'
-                  }`}>
+                  <label
+                    className={`border-2 rounded-lg p-4 cursor-pointer text-center ${
+                      formData.paymentMethod === 'mercadopago' 
+                        ? 'border-turrs-blue bg-blue-50' 
+                        : 'border-gray-300'
+                    }`}
+                  >
                     <input
                       type="radio"
                       name="paymentMethod"
@@ -254,11 +315,13 @@ const Checkout = () => {
                     <div className="font-turrs-text font-semibold">Mercado Pago</div>
                   </label>
 
-                  <label className={`border-2 rounded-lg p-4 cursor-pointer text-center ${
-                    formData.paymentMethod === 'paypal' 
-                      ? 'border-turrs-blue bg-blue-50' 
-                      : 'border-gray-300'
-                  }`}>
+                  <label
+                    className={`border-2 rounded-lg p-4 cursor-pointer text-center ${
+                      formData.paymentMethod === 'paypal' 
+                        ? 'border-turrs-blue bg-blue-50' 
+                        : 'border-gray-300'
+                    }`}
+                  >
                     <input
                       type="radio"
                       name="paymentMethod"
@@ -270,11 +333,13 @@ const Checkout = () => {
                     <div className="font-turrs-text font-semibold">PayPal</div>
                   </label>
 
-                  <label className={`border-2 rounded-lg p-4 cursor-pointer text-center ${
-                    formData.paymentMethod === 'stripe' 
-                      ? 'border-turrs-blue bg-blue-50' 
-                      : 'border-gray-300'
-                  }`}>
+                  <label
+                    className={`border-2 rounded-lg p-4 cursor-pointer text-center ${
+                      formData.paymentMethod === 'stripe' 
+                        ? 'border-turrs-blue bg-blue-50' 
+                        : 'border-gray-300'
+                    }`}
+                  >
                     <input
                       type="radio"
                       name="paymentMethod"

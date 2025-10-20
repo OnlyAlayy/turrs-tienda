@@ -4,6 +4,19 @@ import { authenticate, isAdmin } from '../middleware/auth.js';
 
 const router = express.Router();
 
+
+// backend/routes/products.js - AGREGAR ESTA RUTA
+router.get('/featured', async (req, res) => {
+  try {
+    // Obtener productos destacados (puedes usar un campo 'featured' o limitar)
+    const featuredProducts = await Product.find().limit(3); // O usa .find({ featured: true })
+    res.json(featuredProducts);
+  } catch (error) {
+    console.error('Error fetching featured products:', error);
+    res.status(500).json({ message: 'Error al obtener productos destacados' });
+  }
+});
+
 // GET - Obtener todos los productos
 router.get('/', async (req, res) => {
   try {
@@ -79,5 +92,7 @@ router.delete('/:id', authenticate, isAdmin, async (req, res) => {
     res.status(500).json({ message: 'Error del servidor', error: error.message });
   }
 });
+
+
 
 export default router;

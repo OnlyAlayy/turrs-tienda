@@ -1,7 +1,7 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
-
+import { authenticate } from '../middleware/auth.js';
 const router = express.Router();
 
 // Registro
@@ -78,6 +78,16 @@ router.post('/login', async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: 'Error del servidor', error: error.message });
   }
+  
+});
+
+router.get('/verify', authenticate, (req, res) => {
+  res.json({
+    id: req.user._id,
+    email: req.user.email,
+    name: req.user.name,
+    role: req.user.role
+  });
 });
 
 export default router;

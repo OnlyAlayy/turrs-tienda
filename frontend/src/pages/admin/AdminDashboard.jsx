@@ -1,4 +1,4 @@
-// ... imports anteriores
+// frontend/src/pages/admin/AdminDashboard.jsx
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import axios from 'axios';
@@ -76,7 +76,7 @@ const AdminDashboard = () => {
           Panel de Administración
         </h1>
         <p className="font-turrs-text text-gray-600">
-          Bienvenido, {user.name}. Gestiona tu tienda desde aquí.
+          Bienvenido, {user?.name || user?.email || 'Administrador'}. Gestiona tu tienda desde aquí.
         </p>
       </div>
 

@@ -11,6 +11,7 @@ import authRoutes from './routes/auth.js';
 import productRoutes from './routes/products.js';
 import reviewRoutes from './routes/reviews.js';
 import orderRoutes from './routes/orders.js';
+import paymentRoutes from './routes/payments.js'; // 🔹 mantenemos la ruta de pagos
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -30,10 +31,21 @@ app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/payments', paymentRoutes); // 🔹 añadida de nuevo
 
 // Ruta básica de prueba
 app.get('/api', (req, res) => {
   res.json({ message: 'Bienvenido a la API de TURRS Tienda' });
+});
+
+// Ruta de health check (útil para verificar estado del server y la DB)
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'OK',
+    message: 'Servidor funcionando',
+    timestamp: new Date().toISOString(),
+    database: mongoose.connection.readyState === 1 ? 'Conectado' : 'Desconectado'
+  });
 });
 
 // Ruta por defecto para manejar 404

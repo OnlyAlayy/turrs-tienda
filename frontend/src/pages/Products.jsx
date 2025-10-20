@@ -107,7 +107,7 @@ const Products = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {products.map((product) => (
           <div key={product._id} className="card-turrs hover:shadow-xl transition-shadow">
-            <Link to={`/product/${product._id}`}>
+            <Link to={`/products/${product._id}`}>
               {product.images && product.images[0] && (
                 <img
                   src={product.images[0]}

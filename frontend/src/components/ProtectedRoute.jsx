@@ -1,3 +1,4 @@
+// frontend/src/components/ProtectedRoute.jsx
 import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
@@ -20,10 +21,10 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
       title: 'Acceso restringido',
       text: 'Debes iniciar sesión para acceder a esta página'
     });
-    return <Navigate to="/" replace />;
+    return <Navigate to="/login" replace />; // ✅ Cambiado a /login
   }
 
-  if (requiredRole && user.role !== requiredRole) {
+  if (requiredRole && user?.role !== requiredRole) { // ✅ Agregado operador de encadenamiento opcional
     Swal.fire({
       icon: 'error',
       title: 'Acceso denegado',

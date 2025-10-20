@@ -17,31 +17,36 @@ const LoginForm = ({ onSwitchToRegister, onClose }) => {
     });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
+// En LoginForm.jsx - modifica el handleSubmit
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setLoading(true);
 
-    const result = await login(formData.email, formData.password);
+  const result = await login(formData.email, formData.password);
 
-    if (result.success) {
-      Swal.fire({
-        icon: 'success',
-        title: '¡Login exitoso!',
-        text: 'Bienvenido de vuelta',
-        timer: 2000,
-        showConfirmButton: false
-      });
+  if (result.success) {
+    Swal.fire({
+      icon: 'success',
+      title: '¡Login exitoso!',
+      text: 'Bienvenido de vuelta',
+      timer: 2000,
+      showConfirmButton: false
+    });
+    
+    // Verificación segura antes de llamar onClose
+    if (typeof onClose === 'function') {
       onClose();
-    } else {
-      Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: result.message
-      });
     }
+  } else {
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: result.message
+    });
+  }
 
-    setLoading(false);
-  };
+  setLoading(false);
+};
 
   return (
     <div className="max-w-md mx-auto p-6 bg-white rounded-lg shadow-lg">

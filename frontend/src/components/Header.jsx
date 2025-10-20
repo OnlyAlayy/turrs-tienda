@@ -1,3 +1,4 @@
+// frontend/src/components/Header.jsx
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -70,11 +71,11 @@ const Header = () => {
               {isAuthenticated ? (
                 <div className="flex items-center space-x-4">
                   <span className="font-turrs-text text-turrs-white">
-                    Hola, {user.name}
+                    Hola, {user?.name || user?.email}
                   </span>
-                  {user.role === 'admin' && (
+                  {user?.role === 'admin' && (
                     <Link
-                      to="/admin"
+                      to="/admin-dashboard"
                       className="font-turrs-text text-turrs-white hover:text-turrs-skin transition-colors"
                     >
                       Admin
@@ -108,6 +109,7 @@ const Header = () => {
         </div>
       </header>
 
+      {/* Auth Modal */}
       <AuthModal
         isOpen={authModalOpen}
         onClose={() => setAuthModalOpen(false)}

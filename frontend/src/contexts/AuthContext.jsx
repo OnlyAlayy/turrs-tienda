@@ -28,22 +28,24 @@ export const AuthProvider = ({ children }) => {
   }, [token]);
 
   // Verificar token al cargar
-  useEffect(() => {
-    const verifyToken = async () => {
-      if (token) {
-        try {
-          const response = await axios.get('http://localhost:5000/api/auth/verify');
-          setUser(response.data.user);
-        } catch (error) {
-          console.error('Token inválido:', error);
-          logout();
-        }
+// frontend/src/contexts/AuthContext.jsx - CORREGIR
+// Verificar token al cargar
+useEffect(() => {
+  const verifyToken = async () => {
+    if (token) {
+      try {
+        const response = await axios.get('http://localhost:5000/api/auth/verify');
+        setUser(response.data); // ✅ CAMBIAR: response.data en lugar de response.data.user
+      } catch (error) {
+        console.error('Token inválido:', error);
+        logout();
       }
-      setLoading(false);
-    };
+    }
+    setLoading(false);
+  };
 
-    verifyToken();
-  }, [token]);
+  verifyToken();
+}, [token]);
 
   const login = async (email, password) => {
     try {
