@@ -32,9 +32,12 @@ const orderSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['pending', 'paid', 'shipped', 'delivered', 'cancelled'],
+    enum: ['pending', 'paid', 'processing', 'shipped', 'delivered', 'cancelled'],
     default: 'pending'
   },
+  trackingNumber: String,
+  shippedAt: Date,
+  deliveredAt: Date,
   paymentMethod: {
     type: String,
     enum: ['mercadopago', 'paypal', 'stripe'],

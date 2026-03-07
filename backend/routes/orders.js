@@ -1,23 +1,129 @@
 import express from 'express';
+import mongoose from 'mongoose';
 import Order from '../models/Order.js';
 import Product from '../models/Product.js';
 import { authenticate } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// GET - Obtener todas las órdenes (solo admin)
+// GET - Obtener todas las órdenes con filtros, paginación y estadísticas (solo admin)
 router.get('/', authenticate, async (req, res) => {
   try {
     if (req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Acceso denegado' });
     }
 
-    const orders = await Order.find()
-      .populate('userId', 'name email')
-      .populate('products.productId', 'name price images')
-      .sort({ createdAt: -1 });
+    const { status, search, dateFrom, dateTo, page = 1, limit = 20 } = req.query;
 
-    res.json(orders);
+    let query = {};
+
+    // Filters
+    if (status && status !== 'Todos los estados' && status !== 'Todos') {
+      // Map frontend status labels if needed, or assume exact keys. Let's rely on exact keys passed from frontend
+      // If frontend sends pending, paid, etc.
+      query.status = status;
+    }
+
+    if (dateFrom || dateTo) {
+      query.createdAt = {};
+      if (dateFrom) query.createdAt.$gte = new Date(dateFrom);
+      if (dateTo) {
+        let endDate = new Date(dateTo);
+        endDate.setHours(23, 59, 59, 999);
+        query.createdAt.$lte = endDate;
+      }
+    }
+
+    if (search) {
+      const users = await mongoose.model('User').find({
+        $or: [
+          { email: { $regex: search, $options: 'i' } },
+          { firstName: { $regex: search, $options: 'i' } },
+          { lastName: { $regex: search, $options: 'i' } },
+          { name: { $regex: search, $options: 'i' } }
+        ]
+      }, '_id');
+      const userIds = users.map(u => u._id);
+
+      const searchConditions = [{ userId: { $in: userIds } }];
+      if (mongoose.Types.ObjectId.isValid(search)) {
+        searchConditions.push({ _id: search });
+      } else {
+        searchConditions.push({
+          $expr: {
+            $regexMatch: {
+              input: { $toString: "$_id" },
+              regex: search,
+              options: "i"
+            }
+          }
+        });
+      }
+      query.$or = searchConditions;
+    }
+
+    const skip = (Number(page) - 1) * Number(limit);
+
+    // Global stats across all orders
+    const statsAgg = await Order.aggregate([
+      {
+        $facet: {
+          totalRevenue: [
+            { $match: { status: 'paid' } },
+            { $group: { _id: null, total: { $sum: '$total' } } }
+          ],
+          counts: [
+            {
+              $group: {
+                _id: '$status',
+                count: { $sum: 1 }
+              }
+            }
+          ],
+          totalOrders: [
+            { $count: 'count' }
+          ]
+        }
+      }
+    ]);
+
+    const statsResult = statsAgg[0];
+    const totalRev = statsResult.totalRevenue[0]?.total || 0;
+    const totOrd = statsResult.totalOrders[0]?.count || 0;
+
+    const statusCounts = statsResult.counts.reduce((acc, curr) => {
+      acc[curr._id] = curr.count;
+      return acc;
+    }, {});
+
+    const stats = {
+      totalRevenue: totalRev,
+      totalOrders: totOrd,
+      pendingCount: statusCounts.pending || 0,
+      paidCount: statusCounts.paid || 0,
+      processingCount: statusCounts.processing || 0,
+      shippedCount: statusCounts.shipped || 0,
+      deliveredCount: statusCounts.delivered || 0,
+      cancelledCount: statusCounts.cancelled || 0
+    };
+
+    const totalFiltered = await Order.countDocuments(query);
+    const totalPages = Math.ceil(totalFiltered / Number(limit));
+
+    const orders = await Order.find(query)
+      .populate('userId', 'firstName lastName name email phone dni avatar')
+      .populate('products.productId', 'name slug images category brand')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(Number(limit));
+
+    res.json({
+      orders,
+      total: totalFiltered,
+      page: Number(page),
+      totalPages,
+      stats
+    });
   } catch (error) {
     res.status(500).json({ message: 'Error del servidor', error: error.message });
   }
@@ -40,8 +146,8 @@ router.get('/my-orders', authenticate, async (req, res) => {
 router.get('/:id', authenticate, async (req, res) => {
   try {
     const order = await Order.findById(req.params.id)
-      .populate('userId', 'name email')
-      .populate('products.productId', 'name price images');
+      .populate('userId', 'firstName lastName name email phone dni avatar')
+      .populate('products.productId', 'name slug price images category brand');
 
     if (!order) {
       return res.status(404).json({ message: 'Orden no encontrada' });
@@ -113,8 +219,8 @@ router.put('/:id', authenticate, async (req, res) => {
       req.params.id,
       req.body,
       { new: true, runValidators: true }
-    ).populate('userId', 'name email')
-      .populate('products.productId', 'name price images');
+    ).populate('userId', 'firstName lastName name email phone dni avatar')
+      .populate('products.productId', 'name slug price images category brand');
 
     if (!order) {
       return res.status(404).json({ message: 'Orden no encontrada' });
@@ -123,6 +229,41 @@ router.put('/:id', authenticate, async (req, res) => {
     res.json(order);
   } catch (error) {
     res.status(400).json({ message: 'Error actualizando orden', error: error.message });
+  }
+});
+
+// PATCH - Actualizar estado de orden
+router.patch('/:id/status', authenticate, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Acceso denegado' });
+    }
+
+    const { status, trackingNumber } = req.body;
+    const updateData = { status };
+
+    if (status === 'shipped') {
+      if (trackingNumber) updateData.trackingNumber = trackingNumber;
+      updateData.shippedAt = new Date();
+    } else if (status === 'delivered') {
+      updateData.deliveredAt = new Date();
+    }
+
+    const order = await Order.findByIdAndUpdate(
+      req.params.id,
+      { $set: updateData },
+      { new: true, runValidators: true }
+    )
+      .populate('userId', 'firstName lastName name email phone dni avatar')
+      .populate('products.productId', 'name slug price images category brand');
+
+    if (!order) {
+      return res.status(404).json({ message: 'Orden no encontrada' });
+    }
+
+    res.json(order);
+  } catch (error) {
+    res.status(400).json({ message: 'Error actualizando estado', error: error.message });
   }
 });
 

@@ -249,6 +249,11 @@ const Navbar = () => {
                                     <div className="flex flex-col gap-3">
                                         <Link to="/perfil" className="text-white/70 hover:text-white text-sm transition-colors block">Mi Perfil</Link>
                                         <Link to="/mis-pedidos" className="text-white/70 hover:text-white text-sm transition-colors block">Mis Pedidos</Link>
+                                        {user?.role === 'admin' && (
+                                            <Link to="/admin" className="text-[#C9A84C] font-semibold hover:text-white text-sm transition-colors block">
+                                                Panel de Admin
+                                            </Link>
+                                        )}
                                         <div className="h-px bg-white/10 my-1" />
                                         <button
                                             onClick={() => { logout(); navigate('/'); }}
@@ -339,6 +344,11 @@ const Navbar = () => {
                                         <Link onClick={() => setIsMobileMenuOpen(false)} to="/mis-pedidos" className="flex items-center gap-3 text-white/80">
                                             <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg> Mis Pedidos
                                         </Link>
+                                        {user?.role === 'admin' && (
+                                            <Link onClick={() => setIsMobileMenuOpen(false)} to="/admin" className="flex items-center gap-3 text-[#C9A84C] font-semibold">
+                                                <svg fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg> Panel de Admin
+                                            </Link>
+                                        )}
                                         <button onClick={() => { logout(); setIsMobileMenuOpen(false); navigate('/'); }} className="flex items-center gap-3 text-[#C9A84C] text-left">
                                             Cerrar Sesión
                                         </button>
