@@ -56,7 +56,7 @@ function App() {
                       {/* Info Pages */}
                       <Route path="/envios" element={<EnviosPage />} />
                       <Route path="/devoluciones" element={<DevolucionesPage />} />
-                      <Route path="/guia-talles" element={<GuiaTallesPage />} />
+                      <Route path="/guia-de-talles" element={<GuiaTallesPage />} />
                       <Route path="/faq" element={<FAQPage />} />
                       <Route path="/contacto" element={<ContactoPage />} />
                       <Route path="/terminos" element={<TerminosPage />} />
