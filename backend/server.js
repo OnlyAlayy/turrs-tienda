@@ -19,6 +19,7 @@ import stripeRoutes from './routes/stripe.js'; // 🔹 nueva ruta de Stripe
 import newsletterRoutes from './routes/newsletter.js'; // 🔹 nueva ruta de Newsletter
 import contactRoutes from './routes/contact.js'; // Contacto
 import usersRoutes from './routes/users.js'; // Usuarios
+import adminRoutes from './routes/admin.js'; // Admin Stats
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -44,6 +45,7 @@ app.use('/api/stripe', stripeRoutes); // Stripe
 app.use('/api/newsletter', newsletterRoutes); // Newsletter
 app.use('/api/contact', contactRoutes); // Contacto
 app.use('/api/users', usersRoutes); // Usuarios
+app.use('/api/admin', adminRoutes); // Admin Stats
 
 // Ruta básica de prueba
 app.get('/api', (req, res) => {

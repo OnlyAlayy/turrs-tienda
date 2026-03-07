@@ -54,7 +54,7 @@ const Navbar = () => {
     const isLandingPage = location.pathname === '/' || location.pathname === '/argentina2026';
 
     const { getCartItemsCount, setIsCartOpen } = useCart();
-    const { isAuthenticated, logout } = useAuth();
+    const { isAuthenticated, logout, user } = useAuth();
 
     useEffect(() => {
         const handleScroll = () => {

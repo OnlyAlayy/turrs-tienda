@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
 import { OrderProvider } from './contexts/OrderContext';
+import { QuickViewProvider } from './contexts/QuickViewContext';
 
 // Pages & Components
 import PageWrapper from './components/layout/PageWrapper';
@@ -27,6 +28,7 @@ import TerminosPage from './pages/info/TerminosPage';
 import PrivacidadPage from './pages/info/PrivacidadPage';
 import ProfilePage from './pages/ProfilePage';
 import OnboardingModal from './components/profile/OnboardingModal';
+import QuickViewModal from './components/store/QuickViewModal';
 
 function App() {
   return (
@@ -34,107 +36,109 @@ function App() {
       <AuthProvider>
         <CartProvider>
           <OrderProvider>
-            <OnboardingModal />
-            <Routes>
-              {/* Landing Page Scrollytelling - Sin envoltorio global para control total */}
-              <Route path="/" element={<LandingPage />} />
-              <Route path="/argentina2026" element={<LandingPage />} />
+            <QuickViewProvider>
+              <OnboardingModal />
+              <QuickViewModal />
+              <Routes>
+                {/* Landing Page Scrollytelling - Sin envoltorio global para control total */}
+                <Route path="/" element={<LandingPage />} />
+                <Route path="/argentina2026" element={<LandingPage />} />
 
-              {/* Legacy Home Redirect - opcional, asegura que /home envíe a la landing */}
-              <Route path="/home" element={<Navigate to="/" replace />} />
+                {/* Legacy Home Redirect - opcional, asegura que /home envíe a la landing */}
+                <Route path="/home" element={<Navigate to="/" replace />} />
 
-              {/* Rutas Públicas de la Tienda y Privadas (Envueltas en PageWrapper) */}
-              <Route
-                path="/*"
-                element={
-                  <PageWrapper>
-                    <Routes>
-                      {/* Tienda Publica */}
-                      <Route path="/tienda" element={<StorePage />} />
-                      <Route path="/coleccion/:brand" element={<CollectionPage />} />
-                      <Route path="/producto/:id" element={<ProductPage />} />
+                {/* Rutas Públicas de la Tienda y Privadas (Envueltas en PageWrapper) */}
+                <Route
+                  path="/*"
+                  element={
+                    <PageWrapper>
+                      <Routes>
+                        {/* Tienda Publica */}
+                        <Route path="/tienda" element={<StorePage />} />
+                        <Route path="/coleccion/:brand" element={<CollectionPage />} />
+                        <Route path="/producto/:id" element={<ProductPage />} />
 
-                      {/* Info Pages */}
-                      <Route path="/envios" element={<EnviosPage />} />
-                      <Route path="/devoluciones" element={<DevolucionesPage />} />
-                      <Route path="/guia-de-talles" element={<GuiaTallesPage />} />
-                      <Route path="/preguntas-frecuentes" element={<FAQPage />} />
-                      <Route path="/contacto" element={<ContactoPage />} />
-                      <Route path="/terminos" element={<TerminosPage />} />
-                      <Route path="/privacidad" element={<PrivacidadPage />} />
+                        {/* Info Pages */}
+                        <Route path="/envios" element={<EnviosPage />} />
+                        <Route path="/devoluciones" element={<DevolucionesPage />} />
+                        <Route path="/guia-de-talles" element={<GuiaTallesPage />} />
+                        <Route path="/preguntas-frecuentes" element={<FAQPage />} />
+                        <Route path="/contacto" element={<ContactoPage />} />
+                        <Route path="/terminos" element={<TerminosPage />} />
+                        <Route path="/privacidad" element={<PrivacidadPage />} />
 
-                      {/* Redirecciones de rutas legacy si existen */}
-                      <Route path="/products" element={<Navigate to="/tienda" replace />} />
-                      <Route path="/products/:id" element={<Navigate to="/tienda" replace />} />
+                        {/* Redirecciones de rutas legacy si existen */}
+                        <Route path="/products" element={<Navigate to="/tienda" replace />} />
+                        <Route path="/products/:id" element={<Navigate to="/tienda" replace />} />
 
-                      {/* Rutas Privadas / Protegidas */}
-                      <Route
-                        path="/cart"
-                        element={
-                          <ProtectedRoute>
-                            <Cart />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path="/checkout"
-                        element={
-                          <ProtectedRoute>
-                            <Checkout />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path="/mis-pedidos"
-                        element={
-                          <ProtectedRoute>
-                            <OrdersPage />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path="/perfil"
-                        element={
-                          <ProtectedRoute>
-                            <ProfilePage />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path="/order-confirmation/:orderId"
-                        element={
-                          <ProtectedRoute>
-                            <OrderConfirmation />
-                          </ProtectedRoute>
-                        }
-                      />
+                        {/* Rutas Privadas / Protegidas */}
+                        <Route
+                          path="/cart"
+                          element={
+                            <ProtectedRoute>
+                              <Cart />
+                            </ProtectedRoute>
+                          }
+                        />
+                        <Route
+                          path="/checkout"
+                          element={
+                            <ProtectedRoute>
+                              <Checkout />
+                            </ProtectedRoute>
+                          }
+                        />
+                        <Route
+                          path="/mis-pedidos"
+                          element={
+                            <ProtectedRoute>
+                              <OrdersPage />
+                            </ProtectedRoute>
+                          }
+                        />
+                        <Route
+                          path="/perfil"
+                          element={
+                            <ProtectedRoute>
+                              <ProfilePage />
+                            </ProtectedRoute>
+                          }
+                        />
+                        <Route
+                          path="/order-confirmation/:orderId"
+                          element={
+                            <ProtectedRoute>
+                              <OrderConfirmation />
+                            </ProtectedRoute>
+                          }
+                        />
 
-                      {/* Rutas de admin */}
-                      <Route
-                        path="/admin-dashboard"
-                        element={
-                          <ProtectedRoute requiredRole="admin">
-                            <AdminDashboard />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path="/admin/*"
-                        element={
-                          <ProtectedRoute requiredRole="admin">
-                            <AdminDashboard />
-                          </ProtectedRoute>
-                        }
-                      />
+                        {/* Rutas de admin */}
+                        <Route
+                          path="/admin-dashboard"
+                          element={
+                            <ProtectedRoute requiredRole="admin">
+                              <AdminDashboard />
+                            </ProtectedRoute>
+                          }
+                        />
+                        <Route
+                          path="/admin/*"
+                          element={
+                            <ProtectedRoute requiredRole="admin">
+                              <AdminDashboard />
+                            </ProtectedRoute>
+                          }
+                        />
 
-                      {/* Not Found / 404 Route */}
-                      <Route path="*" element={<NotFound />} />
-                    </Routes>
-                  </PageWrapper>
-                }
-              />
-            </Routes>
-
+                        {/* Not Found / 404 Route */}
+                        <Route path="*" element={<NotFound />} />
+                      </Routes>
+                    </PageWrapper>
+                  }
+                />
+              </Routes>
+            </QuickViewProvider>
           </OrderProvider>
         </CartProvider>
       </AuthProvider>

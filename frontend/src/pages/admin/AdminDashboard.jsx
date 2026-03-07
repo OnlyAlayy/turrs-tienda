@@ -3,14 +3,26 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import axios from 'axios';
 import Swal from 'sweetalert2';
-import ProductForm from '../../components/admin/ProductForm';
+import AdminProductCard from '../../components/admin/AdminProductCard';
+import ProductEditModal from '../../components/admin/ProductEditModal';
+import ConfirmDeleteModal from '../../components/admin/ConfirmDeleteModal';
 import OrderDetailModal, { STATUS_STYLES, formatPrice, formatDate } from '../../components/admin/OrderDetailModal';
+import StatsTab from '../../components/admin/StatsTab';
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('products');
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showProductForm, setShowProductForm] = useState(false);
+  // Product Modals State
+  const [isProductEditModalOpen, setIsProductEditModalOpen] = useState(false);
+  const [isConfirmDeleteModalOpen, setIsConfirmDeleteModalOpen] = useState(false);
+  const [selectedProductForEdit, setSelectedProductForEdit] = useState(null);
+  const [selectedProductForDelete, setSelectedProductForDelete] = useState(null);
+
+  // Product Filters
+  const [productSearch, setProductSearch] = useState('');
+  const [productCategoryFilter, setProductCategoryFilter] = useState('Todas');
+
   const { user } = useAuth();
 
   // Orders State
@@ -110,31 +122,27 @@ const AdminDashboard = () => {
     fetchOrders(); // Optionally refetch for exact stats
   };
 
-  const handleDeleteProduct = async (productId) => {
-    const result = await Swal.fire({
-      title: '¿Estás seguro?',
-      text: "¡No podrás revertir esto!",
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#C0392B',
-      cancelButtonColor: '#5DADE2',
-      confirmButtonText: 'Sí, eliminar',
-      cancelButtonText: 'Cancelar'
-    });
-
-    if (result.isConfirmed) {
-      try {
-        await axios.delete(`http://localhost:5000/api/products/${productId}`);
-        setProducts(products.filter(p => p._id !== productId));
-        Swal.fire('¡Eliminado!', 'El producto ha sido eliminado.', 'success');
-      } catch (error) {
-        Swal.fire('Error', 'No se pudo eliminar el producto', 'error');
-      }
-    }
+  const handleDeleteProduct = (product) => {
+    setSelectedProductForDelete(product);
+    setIsConfirmDeleteModalOpen(true);
   };
 
-  const handleProductAdded = (newProduct) => {
-    setProducts([...products, newProduct]);
+  const handleEditProduct = (product) => {
+    setSelectedProductForEdit(product);
+    setIsProductEditModalOpen(true);
+  };
+
+  const handleAddProduct = () => {
+    setSelectedProductForEdit(null); // null means create new
+    setIsProductEditModalOpen(true);
+  };
+
+  const handleProductSaved = () => {
+    fetchProducts(); // Refresh list
+  };
+
+  const handleProductDeleted = () => {
+    fetchProducts();
   };
 
   if (loading) {
@@ -192,60 +200,87 @@ const AdminDashboard = () => {
 
       {/* Content */}
       {activeTab === 'products' && (
-        <div>
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="font-turrs-text text-2xl font-semibold">Gestión de Productos</h2>
+        <div className="space-y-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h2 className="text-white font-bold text-2xl">Productos</h2>
+              <p className="text-white/50 text-sm mt-1">Gestiona el inventario ({products.length})</p>
+            </div>
+
             <button
-              onClick={() => setShowProductForm(true)}
-              className="btn-turrs"
+              onClick={handleAddProduct}
+              className="bg-gradient-to-r from-turrs-blue to-purple-600 hover:from-turrs-blue/80 hover:to-purple-600/80 text-white px-6 py-2.5 rounded-xl font-medium transition flex items-center justify-center gap-2 shadow-lg shadow-turrs-blue/20"
             >
-              + Agregar Producto
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+              </svg>
+              Agregar Producto
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {products.map((product) => (
-              <div key={product._id} className="card-turrs">
-                {product.images && product.images[0] && (
-                  <img
-                    src={product.images[0]}
-                    alt={product.name}
-                    className="w-full h-48 object-cover rounded-t-lg mb-4"
-                  />
-                )}
-                <h3 className="font-turrs-text font-semibold text-lg mb-2">{product.name}</h3>
-                <p className="font-turrs-text text-gray-600 text-sm mb-2 line-clamp-2">
-                  {product.description}
-                </p>
-                <p className="font-turrs-text font-bold text-turrs-blue mb-4">
-                  ${product.price}
-                </p>
-                <div className="flex space-x-2">
-                  <button className="btn-turrs text-sm px-3 py-1">
-                    Editar
-                  </button>
-                  <button
-                    onClick={() => handleDeleteProduct(product._id)}
-                    className="btn-turrs-red text-sm px-3 py-1"
-                  >
-                    Eliminar
-                  </button>
-                </div>
+          <div className="flex flex-col md:flex-row gap-4 mb-6">
+            <div className="flex-1 relative">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-white/40">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
               </div>
-            ))}
+              <input
+                type="text"
+                placeholder="Buscar productos..."
+                value={productSearch}
+                onChange={(e) => setProductSearch(e.target.value)}
+                className="w-full bg-[#050505] border border-white/10 rounded-xl pl-11 pr-4 py-2.5 text-white placeholder-white/30 focus:outline-none focus:border-turrs-blue/50 transition"
+              />
+            </div>
+            <select
+              value={productCategoryFilter}
+              onChange={(e) => setProductCategoryFilter(e.target.value)}
+              className="bg-[#050505] border border-white/10 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-turrs-blue/50 transition appearance-none md:w-48"
+              style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='rgba(255,255,255,0.5)'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1rem center', backgroundSize: '1.2em 1.2em' }}
+            >
+              <option value="Todas">Todas las categorías</option>
+              <option value="Ropa">Ropa</option>
+              <option value="Accesorios">Accesorios</option>
+              <option value="Perfumes">Perfumes</option>
+            </select>
           </div>
 
-          {products.length === 0 && (
-            <div className="text-center py-12">
-              <p className="font-turrs-text text-gray-500">No hay productos registrados</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {products
+              .filter(p => productCategoryFilter === 'Todas' || p.category === productCategoryFilter)
+              .filter(p => p.name.toLowerCase().includes(productSearch.toLowerCase()))
+              .map((product) => (
+                <AdminProductCard
+                  key={product._id}
+                  product={product}
+                  onEdit={() => handleEditProduct(product)}
+                  onDelete={() => handleDeleteProduct(product)}
+                />
+              ))}
+          </div>
+
+          {products.length === 0 && !loading && (
+            <div className="text-center py-20 bg-white/5 border border-white/5 rounded-2xl">
+              <p className="text-white/40 mb-2">No hay productos en el inventario</p>
+              <button onClick={handleAddProduct} className="text-turrs-blue hover:text-white transition font-medium">
+                Crear el primer producto
+              </button>
             </div>
           )}
 
-          {/* Modal Form */}
-          <ProductForm
-            isOpen={showProductForm}
-            onClose={() => setShowProductForm(false)}
-            onProductAdded={handleProductAdded}
+          <ProductEditModal
+            isOpen={isProductEditModalOpen}
+            onClose={() => setIsProductEditModalOpen(false)}
+            product={selectedProductForEdit}
+            onSaved={handleProductSaved}
+          />
+
+          <ConfirmDeleteModal
+            isOpen={isConfirmDeleteModalOpen}
+            onClose={() => setIsConfirmDeleteModalOpen(false)}
+            product={selectedProductForDelete}
+            onSuccess={handleProductDeleted}
           />
         </div>
       )}
@@ -492,10 +527,7 @@ const AdminDashboard = () => {
       )}
 
       {activeTab === 'stats' && (
-        <div>
-          <h2 className="font-turrs-text text-2xl font-semibold mb-6">Estadísticas</h2>
-          <p className="font-turrs-text text-gray-500">Próximamente...</p>
-        </div>
+        <StatsTab />
       )}
     </div>
   );

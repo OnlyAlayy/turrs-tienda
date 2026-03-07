@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useQuickView } from '../../contexts/QuickViewContext';
 
 const formatPrice = (price) => {
     return new Intl.NumberFormat('es-AR', {
@@ -12,6 +13,7 @@ const formatPrice = (price) => {
 
 const ProductCard = ({ product }) => {
     const { name, slug, price, compareAtPrice, images, brand, category, isNewArrival, isBestSeller, isLimitedEdition } = product;
+    const { openQuickView } = useQuickView();
 
     return (
         <motion.div
@@ -39,8 +41,8 @@ const ProductCard = ({ product }) => {
                 {/* Quick Add Button overlay */}
                 <div className="absolute bottom-4 left-4 right-4 translate-y-8 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 z-10">
                     <button
-                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); alert('Vista Rápida próximamente'); }}
-                        className="w-full bg-white/10 backdrop-blur-md border border-white/20 text-white font-medium py-3 rounded-full hover:bg-white hover:text-black hover:border-white transition-colors"
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); openQuickView(product); }}
+                        className="w-full bg-white/10 backdrop-blur-md border border-white/20 text-white font-medium py-3 rounded-full hover:bg-white hover:text-black hover:border-white transition-colors cursor-pointer"
                     >
                         Vista Rápida
                     </button>

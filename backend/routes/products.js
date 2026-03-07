@@ -96,10 +96,24 @@ router.get('/:idOrSlug', async (req, res) => {
   }
 });
 
+import Order from '../models/Order.js';
+
 // POST - Crear producto (solo admin)
 router.post('/', authenticate, isAdmin, async (req, res) => {
   try {
-    const product = new Product(req.body);
+    const productData = { ...req.body };
+    // Auto-slug if not provided
+    if (!productData.slug && productData.name) {
+      productData.slug = productData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    }
+
+    // Check slug uniqueness
+    const existing = await Product.findOne({ slug: productData.slug });
+    if (existing) {
+      return res.status(400).json({ message: 'El slug ya está en uso. Por favor, elige otro o cambia el nombre.' });
+    }
+
+    const product = new Product(productData);
     await product.save();
     res.status(201).json(product);
   } catch (error) {
@@ -110,9 +124,19 @@ router.post('/', authenticate, isAdmin, async (req, res) => {
 // PUT - Actualizar producto (solo admin)
 router.put('/:id', authenticate, isAdmin, async (req, res) => {
   try {
+    const productData = { ...req.body };
+
+    // Check slug uniqueness if it's changing
+    if (productData.slug) {
+      const existing = await Product.findOne({ slug: productData.slug, _id: { $ne: req.params.id } });
+      if (existing) {
+        return res.status(400).json({ message: 'El slug ya está en uso por otro producto.' });
+      }
+    }
+
     const product = await Product.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      productData,
       { new: true, runValidators: true }
     );
     if (!product) {
@@ -127,16 +151,27 @@ router.put('/:id', authenticate, isAdmin, async (req, res) => {
 // DELETE - Eliminar producto (solo admin)
 router.delete('/:id', authenticate, isAdmin, async (req, res) => {
   try {
-    const product = await Product.findByIdAndDelete(req.params.id);
+    const product = await Product.findById(req.params.id);
     if (!product) {
       return res.status(404).json({ message: 'Producto no encontrado' });
     }
-    res.json({ message: 'Producto eliminado exitosamente' });
+
+    // Check if product is in any orders
+    const orderCount = await Order.countDocuments({ 'products.productId': req.params.id });
+
+    if (orderCount > 0) {
+      // Soft delete
+      product.isActive = false;
+      await product.save();
+      return res.json({ message: 'El producto tiene órdenes asociadas. Se ha marcado como inactivo (Soft Delete).', softDeleted: true });
+    } else {
+      // Hard delete
+      await Product.findByIdAndDelete(req.params.id);
+      return res.json({ message: 'Producto eliminado exitosamente', softDeleted: false });
+    }
   } catch (error) {
     res.status(500).json({ message: 'Error del servidor', error: error.message });
   }
 });
-
-
 
 export default router;
