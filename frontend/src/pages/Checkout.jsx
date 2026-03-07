@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -26,36 +26,47 @@ const Checkout = () => {
   });
 
   const [errors, setErrors] = useState({});
-
-  if (!isAuthenticated) {
-    Swal.fire({
-      icon: 'warning',
-      title: 'Inicia sesión',
-      text: 'Debes iniciar sesión para realizar una compra',
-      color: '#ffffff',
-      background: '#0a0a0c',
-      confirmButtonColor: '#74ACDF'
-    });
-    navigate('/login'); // Assuming /login exists
-    return null;
-  }
-
-  if (!cartItems || cartItems.length === 0) {
-    navigate('/tienda');
-    return null;
-  }
-
-  const validateForm = () => {
-    const newErrors = {};
-    if (!formData.shippingAddress.street.trim()) newErrors.street = 'La calle es requerida';
-    if (!formData.shippingAddress.city.trim()) newErrors.city = 'La ciudad es requerida';
-    if (!formData.shippingAddress.state.trim()) newErrors.state = 'La provincia es requerida';
-    if (!formData.shippingAddress.zipCode.trim()) newErrors.zipCode = 'El código postal es requerido';
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+  const [savedAddresses, setSavedAddresses] = useState([]);
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      const fetchProfile = async () => {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+        try {
+          const res = await axios.get(`${API_URL}/api/users/me`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (res.data.addresses && res.data.addresses.length > 0) {
+            setSavedAddresses(res.data.addresses);
+            const defAddr = res.data.addresses.find(a => a.isDefault);
+            if (defAddr && !formData.shippingAddress.street) {
+              handleSelectAddress(defAddr);
+            }
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      };
+      fetchProfile();
+    }
+  }, [isAuthenticated]);
+
+  const handleSelectAddress = (addr) => {
+    setFormData(prev => ({
+      ...prev,
+      shippingAddress: {
+        street: `${addr.street} ${addr.streetNumber} ${addr.floor ? addr.floor + ' ' + addr.apartment : ''}`.trim(),
+        city: addr.city,
+        state: addr.province,
+        zipCode: addr.postalCode,
+        country: 'Argentina'
+      }
+    }));
+    setErrors({});
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -182,6 +193,26 @@ const Checkout = () => {
                 <span className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-xs">1</span>
                 Dirección de Envío
               </h2>
+
+              {savedAddresses.length > 0 && (
+                <div className="mb-8">
+                  <p className="text-white/50 text-xs font-bold uppercase tracking-widest mb-3">Direcciones Guardadas</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {savedAddresses.map(addr => (
+                      <button
+                        key={addr._id}
+                        type="button"
+                        onClick={() => handleSelectAddress(addr)}
+                        className="text-left p-4 border border-white/10 rounded-xl hover:border-[#74ACDF]/50 bg-black/30 transition-all flex flex-col gap-1 focus:outline-none focus:border-[#74ACDF]"
+                      >
+                        <span className="font-bold text-sm text-white">{addr.label} {addr.isDefault && <span className="text-[#74ACDF] text-[10px] ml-1 uppercase">(Principal)</span>}</span>
+                        <span className="text-xs text-white/50">{addr.street} {addr.streetNumber} {addr.floor && addr.apartment ? `${addr.floor} ${addr.apartment}` : ''}</span>
+                        <span className="text-xs text-white/50">{addr.city}, {addr.province} - {addr.postalCode}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="md:col-span-2">

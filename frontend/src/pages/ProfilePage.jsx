@@ -3,15 +3,20 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import AvatarUpload from '../components/profile/AvatarUpload';
+import AddressManagement from '../components/profile/AddressManagement';
 
 const ProfilePage = () => {
     const { user, token, logout } = useAuth();
     const [activeTab, setActiveTab] = useState('datos'); // 'datos' or 'pedidos'
 
     // Perfil State
-    const [profileData, setProfileData] = useState({ name: '', email: '', phone: '' });
+    const [profileData, setProfileData] = useState({
+        name: '', email: '', phone: '', firstName: '', lastName: '', dni: ''
+    });
     const [isSavingBase, setIsSavingBase] = useState(false);
     const [profileMessage, setProfileMessage] = useState({ type: '', text: '' });
+    const [addresses, setAddresses] = useState([]);
 
     // Passwords State
     const [passwords, setPasswords] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
@@ -36,7 +41,10 @@ const ProfilePage = () => {
         setProfileData({
             name: user.name || '',
             email: user.email || '',
-            phone: user.phone || ''
+            phone: user.phone || '',
+            firstName: user.firstName || '',
+            lastName: user.lastName || '',
+            dni: user.dni || ''
         });
         fetchOrders();
         fetchProfile();
@@ -48,8 +56,12 @@ const ProfilePage = () => {
             setProfileData({
                 name: data.name || '',
                 email: data.email || '',
-                phone: data.phone || ''
+                phone: data.phone || '',
+                firstName: data.firstName || '',
+                lastName: data.lastName || '',
+                dni: data.dni || ''
             });
+            setAddresses(data.addresses || []);
         } catch (error) {
             console.error('Error fetching profile', error);
         }
@@ -74,9 +86,15 @@ const ProfilePage = () => {
         try {
             await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/users/profile`, {
                 name: profileData.name,
-                phone: profileData.phone
+                phone: profileData.phone,
+                firstName: profileData.firstName,
+                lastName: profileData.lastName,
+                dni: profileData.dni
             }, config);
             setProfileMessage({ type: 'success', text: 'Datos actualizados correctamente.' });
+
+            // Recargar perfil (o disparar fetchProfile)
+            fetchProfile();
         } catch (error) {
             setProfileMessage({ type: 'error', text: 'Error al actualizar datos.' });
         } finally {
@@ -189,18 +207,14 @@ const ProfilePage = () => {
                                         <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
                                             Información Personal
                                         </h2>
+
+                                        <div className="mb-8">
+                                            <AvatarUpload currentAvatar={user?.avatar} />
+                                        </div>
+
                                         <form onSubmit={handleProfileSubmit} className="bg-[#0A0A0C] border border-white/5 rounded-2xl p-6 md:p-8 space-y-6">
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                                <div>
-                                                    <label className="block text-white/40 text-xs uppercase tracking-wider mb-2">Nombre completo</label>
-                                                    <input
-                                                        type="text"
-                                                        value={profileData.name}
-                                                        onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
-                                                        className="w-full bg-[#111111] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#74ACDF]/50 transition-colors"
-                                                    />
-                                                </div>
-                                                <div>
+                                                <div className="md:col-span-2">
                                                     <label className="block text-white/40 text-xs uppercase tracking-wider mb-2">Email (No editable)</label>
                                                     <input
                                                         type="email"
@@ -208,12 +222,45 @@ const ProfilePage = () => {
                                                         className="w-full bg-[#050505] border border-white/5 rounded-xl px-4 py-3 text-white/40 cursor-not-allowed"
                                                     />
                                                 </div>
+
+                                                <div>
+                                                    <label className="block text-white/40 text-xs uppercase tracking-wider mb-2">Nombre</label>
+                                                    <input
+                                                        type="text"
+                                                        value={profileData.firstName || profileData.name.split(' ')[0]}
+                                                        onChange={(e) => setProfileData({ ...profileData, firstName: e.target.value })}
+                                                        required
+                                                        className="w-full bg-[#111111] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#74ACDF]/50 transition-colors"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-white/40 text-xs uppercase tracking-wider mb-2">Apellido</label>
+                                                    <input
+                                                        type="text"
+                                                        value={profileData.lastName || profileData.name.split(' ').slice(1).join(' ')}
+                                                        onChange={(e) => setProfileData({ ...profileData, lastName: e.target.value })}
+                                                        required
+                                                        className="w-full bg-[#111111] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#74ACDF]/50 transition-colors"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-white/40 text-xs uppercase tracking-wider mb-2">DNI</label>
+                                                    <input
+                                                        type="text"
+                                                        value={profileData.dni}
+                                                        onChange={(e) => setProfileData({ ...profileData, dni: e.target.value.replace(/[^0-9]/g, '') })}
+                                                        required
+                                                        placeholder="XX.XXX.XXX"
+                                                        className="w-full bg-[#111111] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#74ACDF]/50 transition-colors"
+                                                    />
+                                                </div>
                                                 <div>
                                                     <label className="block text-white/40 text-xs uppercase tracking-wider mb-2">Teléfono</label>
                                                     <input
                                                         type="tel"
                                                         value={profileData.phone}
-                                                        onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
+                                                        onChange={(e) => setProfileData({ ...profileData, phone: e.target.value.replace(/[^0-9+ ]/g, '') })}
+                                                        required
                                                         placeholder="+54 11 ..."
                                                         className="w-full bg-[#111111] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#74ACDF]/50 transition-colors"
                                                     />
@@ -242,6 +289,9 @@ const ProfilePage = () => {
                                             </div>
                                         </form>
                                     </section>
+
+                                    {/* Direcciones (Address Management) */}
+                                    <AddressManagement addresses={addresses} onAddressesUpdate={setAddresses} />
 
                                     {/* Seguridad */}
                                     <section>

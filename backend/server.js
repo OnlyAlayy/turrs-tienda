@@ -7,6 +7,9 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 // Importar rutas
+import passport from 'passport';
+import './config/passport.js';
+
 import authRoutes from './routes/auth.js';
 import productRoutes from './routes/products.js';
 import reviewRoutes from './routes/reviews.js';
@@ -23,6 +26,7 @@ const PORT = process.env.PORT || 5000;
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use(passport.initialize());
 app.use('/uploads', express.static('uploads'));
 
 // Conexión a MongoDB

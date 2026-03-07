@@ -31,9 +31,21 @@ export const AuthProvider = ({ children }) => {
 
   // Verificar token al cargar
   useEffect(() => {
+    // 1. Check for token in URL parameters (from Google OAuth redirect)
+    const params = new URLSearchParams(window.location.search);
+    const urlToken = params.get('token');
+
+    if (urlToken) {
+      setToken(urlToken);
+      // Clean up URL to hide token
+      window.history.replaceState({}, document.title, window.location.pathname + window.location.search.replace(/([?&])token=[^&]+(&|$)/, '$1').replace(/[?&]$/, ''));
+    }
+
     const verifyToken = async () => {
-      if (token) {
+      const activeToken = urlToken || token;
+      if (activeToken) {
         try {
+          axios.defaults.headers.common['Authorization'] = `Bearer ${activeToken}`;
           const response = await axios.get(`${API_URL}/api/auth/verify`);
           setUser(response.data); // ✅ CAMBIAR: response.data en lugar de response.data.user
         } catch (error) {

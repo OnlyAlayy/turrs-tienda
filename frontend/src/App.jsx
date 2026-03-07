@@ -26,6 +26,7 @@ import ContactoPage from './pages/info/ContactoPage';
 import TerminosPage from './pages/info/TerminosPage';
 import PrivacidadPage from './pages/info/PrivacidadPage';
 import ProfilePage from './pages/ProfilePage';
+import OnboardingModal from './components/profile/OnboardingModal';
 
 function App() {
   return (
@@ -33,7 +34,7 @@ function App() {
       <AuthProvider>
         <CartProvider>
           <OrderProvider>
-
+            <OnboardingModal />
             <Routes>
               {/* Landing Page Scrollytelling - Sin envoltorio global para control total */}
               <Route path="/" element={<LandingPage />} />
