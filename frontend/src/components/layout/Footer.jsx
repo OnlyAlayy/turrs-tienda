@@ -4,17 +4,34 @@ import { motion } from 'framer-motion';
 
 const Footer = () => {
     const [email, setEmail] = React.useState('');
-    const [status, setStatus] = React.useState('');
+    const [status, setStatus] = React.useState(''); // '', 'loading', 'success', 'error', 'duplicate'
 
-    const handleSubscribe = (e) => {
+    const handleSubscribe = async (e) => {
         e.preventDefault();
         if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
             setStatus('error');
             return;
         }
-        setStatus('success');
-        setEmail('');
-        setTimeout(() => setStatus(''), 4000);
+
+        setStatus('loading');
+        try {
+            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/newsletter/subscribe`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email })
+            });
+            const data = await response.json();
+
+            if (response.ok) {
+                setStatus('success');
+            } else if (data.error === 'duplicate') {
+                setStatus('duplicate');
+            } else {
+                setStatus('error');
+            }
+        } catch (error) {
+            setStatus('error');
+        }
     };
 
     return (
@@ -34,29 +51,46 @@ const Footer = () => {
                             Equipamiento deportivo premium, botines de alta performance y fragancias exclusivas en un solo lugar.
                         </p>
 
-                        <form onSubmit={handleSubscribe} className={`mt-8 flex items-center max-w-sm border-b transition-colors ${status === 'error' ? 'border-red-500' : status === 'success' ? 'border-green-500' : 'border-white/20 hover:border-white/50 focus-within:border-white'}`}>
-                            <input
-                                type="email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                placeholder={status === 'success' ? "¡Gracias por suscribirte!" : "Ingresa tu email para novedades"}
-                                className="bg-transparent border-none outline-none text-sm py-3 w-full text-white placeholder:text-white/30"
-                            />
-                            <button type="submit" className={`uppercase tracking-widest text-[10px] font-bold transition-colors ${status === 'success' ? 'text-green-500' : status === 'error' ? 'text-red-500' : 'text-white/50 hover:text-white'}`}>
-                                {status === 'success' ? 'OK' : 'Suscribir'}
-                            </button>
-                        </form>
+                        {status === 'success' ? (
+                            <div className="mt-8 py-3 text-[#74ACDF] text-sm font-medium flex items-center gap-2">
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                                ✓ ¡Te suscribiste correctamente!
+                            </div>
+                        ) : (
+                            <form onSubmit={handleSubscribe} className="mt-8">
+                                <div className={`flex items-center max-w-sm border-b transition-colors ${(status === 'error' || status === 'duplicate') ? 'border-red-500/50' : 'border-white/20 hover:border-white/50 focus-within:border-white'}`}>
+                                    <input
+                                        type="email"
+                                        value={email}
+                                        onChange={(e) => { setEmail(e.target.value); setStatus(''); }}
+                                        placeholder="Ingresa tu email para novedades"
+                                        className="bg-transparent border-none outline-none text-sm py-3 w-full text-white placeholder:text-white/30"
+                                        disabled={status === 'loading'}
+                                    />
+                                    <button type="submit" disabled={status === 'loading'} className={`uppercase tracking-widest text-[10px] font-bold transition-colors ${(status === 'error' || status === 'duplicate') ? 'text-red-500' : 'text-white/50 hover:text-white'}`}>
+                                        {status === 'loading' ? (
+                                            <svg className="animate-spin h-4 w-4 text-white/50" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                                            </svg>
+                                        ) : 'Suscribir'}
+                                    </button>
+                                </div>
+                                {status === 'error' && <p className="text-red-400 text-xs mt-2">Email inválido</p>}
+                                {status === 'duplicate' && <p className="text-white/40 text-xs mt-2">Ya estás suscripto.</p>}
+                            </form>
+                        )}
                     </div>
 
                     {/* Tienda Links */}
                     <div>
                         <h4 className="text-xs uppercase tracking-[0.2em] text-white/40 font-bold mb-6">Colecciones</h4>
                         <ul className="space-y-4 text-sm font-medium text-white/70">
-                            <li><Link to="/tienda/camiseta-argentina-2026-titular" className="hover:text-white transition-colors">Argentina 2026</Link></li>
+                            <li><Link to="/tienda?category=camisetas" className="hover:text-white transition-colors">Argentina 2026</Link></li>
                             <li><Link to="/coleccion/adidas" className="hover:text-white transition-colors">Indumentaria Adidas</Link></li>
-                            <li><Link to="/coleccion/nike" className="hover:text-white transition-colors">Calzado Futbol</Link></li>
+                            <li><Link to="/tienda?category=calzado" className="hover:text-white transition-colors">Calzado Futbol</Link></li>
                             <li><Link to="/coleccion/perfumes" className="hover:text-white transition-colors">Perfumería Clásica</Link></li>
-                            <li><Link to="/tienda" className="text-[#74ACDF] hover:text-white transition-colors mt-2 inline-block">Ver Catalogo →</Link></li>
+                            <li><Link to="/tienda" className="text-[#74ACDF] hover:text-white transition-colors mt-2 inline-block">Ver Catálogo →</Link></li>
                         </ul>
                     </div>
 
@@ -66,8 +100,8 @@ const Footer = () => {
                         <ul className="space-y-4 text-sm font-medium text-white/70">
                             <li><Link to="/envios" className="hover:text-white transition-colors">Envíos y Entregas</Link></li>
                             <li><Link to="/devoluciones" className="hover:text-white transition-colors">Devoluciones</Link></li>
-                            <li><Link to="/guia-talles" className="hover:text-white transition-colors">Guía de Talles</Link></li>
-                            <li><Link to="/faq" className="hover:text-white transition-colors">Preguntas Frecuentes</Link></li>
+                            <li><Link to="/guia-de-talles" className="hover:text-white transition-colors">Guía de Talles</Link></li>
+                            <li><Link to="/preguntas-frecuentes" className="hover:text-white transition-colors">Preguntas Frecuentes</Link></li>
                             <li><Link to="/contacto" className="hover:text-white transition-colors">Contacto Oficial</Link></li>
                         </ul>
                     </div>

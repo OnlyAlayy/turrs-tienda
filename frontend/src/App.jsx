@@ -18,6 +18,14 @@ import OrderConfirmation from './pages/OrderConfirmation';
 import OrdersPage from './pages/OrdersPage';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import NotFound from './pages/NotFound';
+import EnviosPage from './pages/info/EnviosPage';
+import DevolucionesPage from './pages/info/DevolucionesPage';
+import GuiaTallesPage from './pages/info/GuiaTallesPage';
+import FAQPage from './pages/info/FAQPage';
+import ContactoPage from './pages/info/ContactoPage';
+import TerminosPage from './pages/info/TerminosPage';
+import PrivacidadPage from './pages/info/PrivacidadPage';
+import ProfilePage from './pages/ProfilePage';
 
 function App() {
   return (
@@ -45,6 +53,15 @@ function App() {
                       <Route path="/coleccion/:brand" element={<CollectionPage />} />
                       <Route path="/producto/:id" element={<ProductPage />} />
 
+                      {/* Info Pages */}
+                      <Route path="/envios" element={<EnviosPage />} />
+                      <Route path="/devoluciones" element={<DevolucionesPage />} />
+                      <Route path="/guia-talles" element={<GuiaTallesPage />} />
+                      <Route path="/faq" element={<FAQPage />} />
+                      <Route path="/contacto" element={<ContactoPage />} />
+                      <Route path="/terminos" element={<TerminosPage />} />
+                      <Route path="/privacidad" element={<PrivacidadPage />} />
+
                       {/* Redirecciones de rutas legacy si existen */}
                       <Route path="/products" element={<Navigate to="/tienda" replace />} />
                       <Route path="/products/:id" element={<Navigate to="/tienda" replace />} />
@@ -71,6 +88,14 @@ function App() {
                         element={
                           <ProtectedRoute>
                             <OrdersPage />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/perfil"
+                        element={
+                          <ProtectedRoute>
+                            <ProfilePage />
                           </ProtectedRoute>
                         }
                       />

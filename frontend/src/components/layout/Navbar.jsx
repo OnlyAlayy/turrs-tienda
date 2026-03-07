@@ -247,6 +247,7 @@ const Navbar = () => {
                                     className="absolute top-10 right-0 bg-[#0A0A0C] border border-white/5 rounded-2xl shadow-2xl shadow-black/80 p-4 min-w-[200px] z-50 text-left cursor-default"
                                 >
                                     <div className="flex flex-col gap-3">
+                                        <Link to="/perfil" className="text-white/70 hover:text-white text-sm transition-colors block">Mi Perfil</Link>
                                         <Link to="/mis-pedidos" className="text-white/70 hover:text-white text-sm transition-colors block">Mis Pedidos</Link>
                                         <div className="h-px bg-white/10 my-1" />
                                         <button
@@ -332,8 +333,11 @@ const Navbar = () => {
                             <div className="mt-8 pt-8 border-t border-white/10">
                                 {isAuthenticated ? (
                                     <div className="flex flex-col gap-4">
+                                        <Link onClick={() => setIsMobileMenuOpen(false)} to="/perfil" className="flex items-center gap-3 text-white/80">
+                                            <UserIcon /> Mi Perfil
+                                        </Link>
                                         <Link onClick={() => setIsMobileMenuOpen(false)} to="/mis-pedidos" className="flex items-center gap-3 text-white/80">
-                                            <UserIcon /> Mis Pedidos
+                                            <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg> Mis Pedidos
                                         </Link>
                                         <button onClick={() => { logout(); setIsMobileMenuOpen(false); navigate('/'); }} className="flex items-center gap-3 text-[#C9A84C] text-left">
                                             Cerrar Sesión
