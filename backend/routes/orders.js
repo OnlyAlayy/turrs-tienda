@@ -1,5 +1,6 @@
 import express from 'express';
 import Order from '../models/Order.js';
+import Product from '../models/Product.js';
 import { authenticate } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -60,6 +61,28 @@ router.get('/:id', authenticate, async (req, res) => {
 // POST - Crear nueva orden
 router.post('/', authenticate, async (req, res) => {
   try {
+    const { products } = req.body;
+
+    // Validate stock
+    if (products && products.length > 0) {
+      for (const item of products) {
+        const product = await Product.findById(item.productId);
+        if (!product) {
+          return res.status(404).json({ message: 'Producto no encontrado' });
+        }
+
+        // Find the selected size
+        const sizeInfo = product.sizes?.find(s => s.size === item.size || s.size === 'Única');
+        const availableStock = sizeInfo ? sizeInfo.stock : 0;
+
+        if (availableStock < item.quantity) {
+          return res.status(400).json({
+            message: `Stock insuficiente para ${product.name} (Seleccionado: ${item.size || 'Única'}). Disponible: ${availableStock}. Por favor actualiza tu carrito.`
+          });
+        }
+      }
+    }
+
     const orderData = {
       ...req.body,
       userId: req.user._id
@@ -91,7 +114,7 @@ router.put('/:id', authenticate, async (req, res) => {
       req.body,
       { new: true, runValidators: true }
     ).populate('userId', 'name email')
-     .populate('products.productId', 'name price images');
+      .populate('products.productId', 'name price images');
 
     if (!order) {
       return res.status(404).json({ message: 'Orden no encontrada' });

@@ -11,7 +11,8 @@ import authRoutes from './routes/auth.js';
 import productRoutes from './routes/products.js';
 import reviewRoutes from './routes/reviews.js';
 import orderRoutes from './routes/orders.js';
-import paymentRoutes from './routes/payments.js'; // 🔹 mantenemos la ruta de pagos
+import paymentRoutes from './routes/payments.js'; // 🔹 mantenemos la ruta de pagos (MercadoPago)
+import stripeRoutes from './routes/stripe.js'; // 🔹 nueva ruta de Stripe
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -31,7 +32,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/orders', orderRoutes);
-app.use('/api/payments', paymentRoutes); // 🔹 añadida de nuevo
+app.use('/api/payments', paymentRoutes); // MercadoPago
+app.use('/api/stripe', stripeRoutes); // Stripe
 
 // Ruta básica de prueba
 app.get('/api', (req, res) => {

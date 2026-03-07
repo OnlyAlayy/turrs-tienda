@@ -27,59 +27,59 @@ export const AuthProvider = ({ children }) => {
     }
   }, [token]);
 
-  // Verificar token al cargar
-// frontend/src/contexts/AuthContext.jsx - CORREGIR
-// Verificar token al cargar
-useEffect(() => {
-  const verifyToken = async () => {
-    if (token) {
-      try {
-        const response = await axios.get('http://localhost:5000/api/auth/verify');
-        setUser(response.data); // ✅ CAMBIAR: response.data en lugar de response.data.user
-      } catch (error) {
-        console.error('Token inválido:', error);
-        logout();
-      }
-    }
-    setLoading(false);
-  };
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
-  verifyToken();
-}, [token]);
+  // Verificar token al cargar
+  useEffect(() => {
+    const verifyToken = async () => {
+      if (token) {
+        try {
+          const response = await axios.get(`${API_URL}/api/auth/verify`);
+          setUser(response.data); // ✅ CAMBIAR: response.data en lugar de response.data.user
+        } catch (error) {
+          console.error('Token inválido:', error);
+          logout();
+        }
+      }
+      setLoading(false);
+    };
+
+    verifyToken();
+  }, [token]);
 
   const login = async (email, password) => {
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/login', {
+      const response = await axios.post(`${API_URL}/api/auth/login`, {
         email,
         password
       });
-      
+
       const { token: newToken, user: userData } = response.data;
       setToken(newToken);
       setUser(userData);
-      
+
       return { success: true };
     } catch (error) {
-      return { 
-        success: false, 
-        message: error.response?.data?.message || 'Error en el login' 
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Error en el login'
       };
     }
   };
 
   const register = async (userData) => {
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/register', userData);
-      
+      const response = await axios.post(`${API_URL}/api/auth/register`, userData);
+
       const { token: newToken, user: userDataResponse } = response.data;
       setToken(newToken);
       setUser(userDataResponse);
-      
+
       return { success: true };
     } catch (error) {
-      return { 
-        success: false, 
-        message: error.response?.data?.message || 'Error en el registro' 
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Error en el registro'
       };
     }
   };

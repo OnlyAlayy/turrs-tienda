@@ -12,6 +12,7 @@ export const useCart = () => {
 
 export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState([]);
+  const [isCartOpen, setIsCartOpen] = useState(false);
 
   // Cargar carrito desde localStorage al iniciar
   useEffect(() => {
@@ -28,34 +29,46 @@ export const CartProvider = ({ children }) => {
 
   const addToCart = (product, quantity = 1) => {
     setCartItems(prevItems => {
-      const existingItem = prevItems.find(item => item._id === product._id);
-      
-      if (existingItem) {
-        return prevItems.map(item =>
-          item._id === product._id
-            ? { ...item, quantity: item.quantity + quantity }
-            : item
-        );
+      // Uniqueness is defined by both ID and chosen size
+      const uniqueId = product.size ? `${product._id}-${product.size}` : product._id;
+
+      const existingItemIndex = prevItems.findIndex(item => {
+        const itemUniqueId = item.size ? `${item._id}-${item.size}` : item._id;
+        return itemUniqueId === uniqueId;
+      });
+
+      if (existingItemIndex >= 0) {
+        const newItems = [...prevItems];
+        newItems[existingItemIndex].quantity += (product.quantity || quantity);
+        return newItems;
       } else {
-        return [...prevItems, { ...product, quantity }];
+        return [...prevItems, { ...product, quantity: product.quantity || quantity }];
       }
     });
+    // Can optionally auto-open cart:
+    setIsCartOpen(true);
   };
 
-  const removeFromCart = (productId) => {
-    setCartItems(prevItems => prevItems.filter(item => item._id !== productId));
+  const removeFromCart = (productId, size = null) => {
+    setCartItems(prevItems => prevItems.filter(item => {
+      const itemUniqueId = item.size ? `${item._id}-${item.size}` : item._id;
+      const removeUniqueId = size ? `${productId}-${size}` : productId;
+      return itemUniqueId !== removeUniqueId;
+    }));
   };
 
-  const updateQuantity = (productId, quantity) => {
+  const updateQuantity = (productId, size, quantity) => {
     if (quantity <= 0) {
-      removeFromCart(productId);
+      removeFromCart(productId, size);
       return;
     }
 
     setCartItems(prevItems =>
-      prevItems.map(item =>
-        item._id === productId ? { ...item, quantity } : item
-      )
+      prevItems.map(item => {
+        const itemUniqueId = item.size ? `${item._id}-${item.size}` : item._id;
+        const targetUniqueId = size ? `${productId}-${size}` : productId;
+        return itemUniqueId === targetUniqueId ? { ...item, quantity } : item;
+      })
     );
   };
 
@@ -78,7 +91,9 @@ export const CartProvider = ({ children }) => {
     updateQuantity,
     clearCart,
     getCartTotal,
-    getCartItemsCount
+    getCartItemsCount,
+    isCartOpen,
+    setIsCartOpen
   };
 
   return (
