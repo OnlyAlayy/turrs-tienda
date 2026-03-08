@@ -108,8 +108,8 @@ const Navbar = () => {
                             {activeDropdown === 'camisetas' && (
                                 <MegaMenuDropdown>
                                     <div className="flex flex-col gap-3">
-                                        <Link to="/tienda/camiseta-argentina-2026-titular" className="text-white/70 hover:text-white text-sm transition-colors">Argentina 2026 Titular</Link>
-                                        <Link to="/tienda/camiseta-argentina-2026-alternativa" className="text-white/70 hover:text-white text-sm transition-colors">Argentina 2026 Alternativa</Link>
+                                        <Link to="/producto/camiseta-argentina-2026-titular" className="text-white/70 hover:text-white text-sm transition-colors">Argentina 2026 Titular</Link>
+                                        <Link to="/producto/camiseta-argentina-2026-alternativa" className="text-white/70 hover:text-white text-sm transition-colors">Argentina 2026 Alternativa</Link>
                                         <Link to="/coleccion/afa" className="text-white/70 hover:text-white text-sm transition-colors">Colección Retro</Link>
                                         <Link to="/tienda?category=camisetas" className="text-[#74ACDF] hover:text-white text-sm font-medium mt-2 transition-colors">Ver todas &rarr;</Link>
                                     </div>

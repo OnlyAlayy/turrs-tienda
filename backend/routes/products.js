@@ -46,7 +46,7 @@ router.get('/', async (req, res) => {
       ];
     }
 
-    let query = Product.find(filter).sort({ createdAt: -1 }).populate('brand');
+    let query = Product.find(filter).sort({ createdAt: -1 });
     const products = await query.exec();
 
     // If frontend sent brand slug, and brand is populated, we might need to filter post-query if we can't easily filter pre-query.
@@ -80,11 +80,11 @@ router.get('/:idOrSlug', async (req, res) => {
     let product;
 
     if (mongoose.Types.ObjectId.isValid(param)) {
-      product = await Product.findById(param).populate('brand');
+      product = await Product.findById(param);
     }
 
     if (!product) {
-      product = await Product.findOne({ slug: param }).populate('brand');
+      product = await Product.findOne({ slug: param });
     }
 
     if (!product) {
@@ -145,6 +145,53 @@ router.put('/:id', authenticate, isAdmin, async (req, res) => {
     res.json(product);
   } catch (error) {
     res.status(400).json({ message: 'Error actualizando producto', error: error.message });
+  }
+});
+
+// PATCH - Actualizar stock de un producto (solo admin)
+router.patch('/:id/stock', authenticate, isAdmin, async (req, res) => {
+  try {
+    const { sizes } = req.body;
+
+    if (!sizes || !Array.isArray(sizes)) {
+      return res.status(400).json({ message: 'El campo sizes debe ser un array válido.' });
+    }
+
+    const product = await Product.findById(req.params.id);
+    if (!product) {
+      return res.status(404).json({ message: 'Producto no encontrado' });
+    }
+
+    let totalStock = 0;
+
+    // Update sizes and recalculate total stock
+    const updatedSizes = product.sizes.map((s) => {
+      // Find new size stock from request
+      const reqSize = sizes.find((rs) => rs.size === s.size);
+      const stock = reqSize !== undefined ? Number(reqSize.stock) : Number(s.stock);
+
+      totalStock += stock;
+      return { ...s, stock };
+    });
+
+    // Handle new sizes added if any (though typically we just update existing ones)
+    sizes.forEach(reqSize => {
+      if (!updatedSizes.find(s => s.size === reqSize.size)) {
+        const stock = Number(reqSize.stock);
+        updatedSizes.push({ size: reqSize.size, stock });
+        totalStock += stock;
+      }
+    });
+
+    product.sizes = updatedSizes;
+    product.totalStock = totalStock;
+
+    await product.save();
+
+    res.json(product);
+  } catch (error) {
+    console.error('Error actualizando stock:', error);
+    res.status(500).json({ message: 'Error del servidor al actualizar stock', error: error.message });
   }
 });
 

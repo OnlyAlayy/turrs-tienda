@@ -49,7 +49,8 @@ export const AuthProvider = ({ children }) => {
           const response = await axios.get(`${API_URL}/api/auth/verify`);
           setUser(response.data); // ✅ CAMBIAR: response.data en lugar de response.data.user
         } catch (error) {
-          console.error('Token inválido:', error);
+          // Token inválido o expirado. El navegador ya mostrará el 401 en la red, 
+          // no necesitamos hacer spam en la consola de React.
           logout();
         }
       }

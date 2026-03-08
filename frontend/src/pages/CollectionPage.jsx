@@ -34,7 +34,7 @@ const CollectionPage = () => {
     };
 
     const { products, loading, error } = useProducts(filters);
-    const info = brandData[brand] || { name: brand.replace('-', ' ').toUpperCase(), slogan: 'Colección Exclusiva', banner: 'https://images.unsplash.com/photo-1556906781-9a412961c28c' };
+    const info = brandData[brand] || { name: (brand || '').replace('-', ' ').toUpperCase(), slogan: 'Colección Exclusiva', banner: 'https://images.unsplash.com/photo-1556906781-9a412961c28c' };
 
     return (
         <div className="min-h-screen bg-[#050505] selection:bg-[#74ACDF]/30">

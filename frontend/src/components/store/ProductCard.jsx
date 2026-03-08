@@ -21,33 +21,36 @@ const ProductCard = ({ product }) => {
             animate={{ opacity: 1, y: 0 }}
             className="group flex flex-col cursor-pointer"
         >
-            <Link to={`/producto/${slug}`} className="relative aspect-[3/4] overflow-hidden rounded-2xl bg-[#0A0A0C] mb-4 border border-white/5">
+            <div className="relative aspect-[3/4] overflow-hidden rounded-2xl bg-[#0A0A0C] mb-4 border border-white/5">
+                <Link to={`/producto/${slug}`} className="absolute inset-0 z-0">
+                    {/* Make image zoom and darken slightly on hover */}
+                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-[1]" />
+
+                    <img
+                        src={images?.[0] || 'https://via.placeholder.com/400x500?text=No+Image'}
+                        alt={name}
+                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-[cubic-bezier(0.25,1,0.5,1)]"
+                    />
+                </Link>
+
                 {/* Badges */}
-                <div className="absolute top-3 left-3 z-10 flex flex-col gap-2">
+                <div className="absolute top-3 left-3 z-10 flex flex-col gap-2 pointer-events-none">
                     {isLimitedEdition && <span className="px-3 py-1 bg-[#C9A84C] text-black text-[10px] font-bold uppercase tracking-widest rounded-full">Limited Edition</span>}
                     {isBestSeller && <span className="px-3 py-1 bg-white text-black text-[10px] font-bold uppercase tracking-widest rounded-full">Best Seller</span>}
                     {isNewArrival && <span className="px-3 py-1 bg-[#74ACDF] text-black text-[10px] font-bold uppercase tracking-widest rounded-full">Nuevo</span>}
                 </div>
 
-                {/* Make image zoom and darken slightly on hover */}
-                <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-[1]" />
-
-                <img
-                    src={images[0] || 'https://via.placeholder.com/400x500?text=No+Image'}
-                    alt={name}
-                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-[cubic-bezier(0.25,1,0.5,1)]"
-                />
-
                 {/* Quick Add Button overlay */}
                 <div className="absolute bottom-4 left-4 right-4 translate-y-8 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 z-10">
-                    <div
+                    <button
+                        type="button"
                         onClick={(e) => { e.preventDefault(); e.stopPropagation(); openQuickView(product); }}
                         className="w-full text-center bg-white/10 backdrop-blur-md border border-white/20 text-white font-medium py-3 rounded-full hover:bg-white hover:text-black hover:border-white transition-colors cursor-pointer"
                     >
                         Vista Rápida
-                    </div>
+                    </button>
                 </div>
-            </Link>
+            </div>
 
             <div className="flex flex-col gap-1 px-1">
                 <div className="flex justify-between items-start gap-4">
@@ -59,7 +62,7 @@ const ProductCard = ({ product }) => {
                         {compareAtPrice && <span className="text-white/40 text-sm line-through">{formatPrice(compareAtPrice)}</span>}
                     </div>
                 </div>
-                <p className="text-white/40 text-sm capitalize">{brand.replace('-', ' ')} · {category}</p>
+                <p className="text-white/40 text-sm capitalize">{brand ? brand.replace('-', ' ') : 'Turrs'} · {category}</p>
             </div>
         </motion.div>
     );

@@ -8,8 +8,10 @@ import AddToCartButton from '../components/store/AddToCartButton';
 import FragranceNotes from '../components/store/FragranceNotes';
 import { useCart } from '../contexts/CartContext';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 const ProductPage = () => {
-    const { id } = useParams(); // Using ID for now, adjust to simple slug later if preferred
+    const { id } = useParams();
     const navigate = useNavigate();
     const { addToCart } = useCart();
 
@@ -25,8 +27,8 @@ const ProductPage = () => {
         const fetchProduct = async () => {
             try {
                 setLoading(true);
-                // Assuming API supports fetching by ID
-                const res = await axios.get(`http://localhost:5000/api/products/${id}`);
+                // Fetch using API URL
+                const res = await axios.get(`${API_URL}/api/products/${id}`);
                 setProduct(res.data);
 
                 // Auto-select size if there's only one with stock
